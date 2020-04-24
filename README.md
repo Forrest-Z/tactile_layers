@@ -1,12 +1,12 @@
 
 This is a costmap plugin to show the position of the obstacle in the costmap when a collision is detected.
 
-- addVariable.cpp
+addVariable.cpp
 
 This is the old code that update the cost of a square area. 
 Not working very well. 
 
-- tactile_layer.cpp
+tactile_layer.cpp
         - Updates the cost of a point
         - Uses the inflation area to update the cost of a circular area.
         - The attached video shows how this layer works using this code
