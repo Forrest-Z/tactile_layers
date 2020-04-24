@@ -22,11 +22,11 @@ public:
   virtual void onInitialize();
   virtual void updateBounds(double robot_x, double robot_y, double robot_yaw, double* min_x, double* min_y, double* max_x,double* max_y);
   virtual void updateCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
+  //virtual void removeCosts(costmap_2d::Costmap2D& master_grid, int min_i, int min_j, int max_i, int max_j);
    
 private:
   void reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level);
   double mark_x_, mark_y_, fx,fy, init_fx, init_fy;
-  //bool touch;
   ros::Subscriber once_sub;
   ros::Subscriber ft_sub;
   void ft_cb(const geometry_msgs::WrenchStampedConstPtr& ft_message);

@@ -12,6 +12,7 @@ using costmap_2d::FREE_SPACE;
 
 using namespace std;
 bool touch;
+bool undo;
 
 double filter_min(double data, double min)
 {
@@ -61,24 +62,29 @@ void TactileLayer::onInitialize()
     dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig>::CallbackType cb
         = boost::bind(&TactileLayer::reconfigureCB, this, _1, _2);
     dsrv_->setCallback(cb);
-    ft_sub = nh.subscribe("/netft_data", 5,
+    ft_sub = nh.subscribe("/netft_data", 1,
         (boost::function<void(const geometry_msgs::WrenchStampedConstPtr&)>)boost::bind(
                               &TactileLayer::ft_cb, this, _1));
     once_sub = nh.subscribe("/netft_data", 1,
         (boost::function<void(const geometry_msgs::WrenchStampedConstPtr&)>)boost::bind(
                                 &TactileLayer::once_cb, this, _1));
     touch = false;
+    undo = false;
 }
 
 void TactileLayer::ft_cb(const geometry_msgs::WrenchStampedConstPtr& ft)
 {
     fx = ft->wrench.force.x;
     fy = ft->wrench.force.y;
+    //cout << "fx:" << fx << "\n";
+    //cout << "fy:" << fy << "\n";
 }
 void TactileLayer::once_cb(const geometry_msgs::WrenchStampedConstPtr& once)
 {
     init_fx = once->wrench.force.x;
     init_fy = once->wrench.force.y;
+    cout << "init fx:" << init_fx << "\n";
+    cout << "init fy:" << init_fy << "\n";
     once_sub.shutdown();
 }
 void TactileLayer::reconfigureCB(costmap_2d::GenericPluginConfig& config, uint32_t level)
@@ -92,28 +98,33 @@ void TactileLayer::updateBounds(double robot_x, double robot_y, double robot_yaw
     if (!enabled_)
         return;
     double radius = 0.1;
+    //init_fx = -0.008807;
+    //init_fy = -0.064642;
     double angle = getAngle(fx, fy, init_fx, init_fy);
-    // cout << "init fx:" << init_fx << "\n";
-    // cout << "init fy:" << init_fy << "\n";
-    // cout << "touch:" << touch << "\n";
-    if (touch == true)
-    {
-        if (angle > 0)
-            mark_x_ = robot_x + radius * cos(angle);
-        else
-            mark_x_ = robot_x - 2 * radius * cos(angle);
+    //cout << "init fx:" << init_fx << "\n";
+    //cout << "init fy:" << init_fy << "\n";
+    if (touch == false)
+        return;
+    if (angle > 0)
+        mark_x_ = robot_x + 2 * radius * cos(angle);
+    else
+        mark_x_ = robot_x - 2 * radius * cos(angle);
 
-        mark_y_ = robot_y + 2 * radius * sin(angle);
-    }
+    mark_y_ = robot_y + 2 * radius * sin(angle);
+    
+    cout << "touch:" << touch << "\n";// does not update bounds when no touch 
+    cout << "angle:" << angle << "\n";
 
-    *min_x = std::min(*min_x, mark_x_ - radius);
-    *min_y = std::min(*min_y, mark_y_ - radius);
-    *max_x = std::max(*max_x, mark_x_ + radius);
-    *max_y = std::max(*max_y, mark_y_ + radius);
-    //  *min_x = std::min(*min_x, mark_x_);
-    //  *min_y = std::min(*min_y, mark_y_);
-    //  *max_x = std::max(*max_x, mark_x_);
-    //  *max_y = std::max(*max_y, mark_y_);
+    //*min_x = std::min(*min_x, mark_x_ - radius);
+    //*min_y = std::min(*min_y, mark_y_ - radius);
+    //*max_x = std::max(*max_x, mark_x_ + radius);
+    //*max_y = std::max(*max_y, mark_y_ + radius);
+
+  *min_x = std::min(*min_x, mark_x_);
+  *min_y = std::min(*min_y, mark_y_);
+  *max_x = std::max(*max_x, mark_x_);
+  *max_y = std::max(*max_y, mark_y_);
+
 }
 
 void TactileLayer::updateCosts(
@@ -125,34 +136,29 @@ void TactileLayer::updateCosts(
     double radius = 0.1;
     double res = master_grid.getResolution();
     unsigned int start_x, start_y, end_x, end_y;
+    cout << "Add cost\n";
+    cout << "mark x =" << mark_x_ << "\n";
+    cout << "mark y =" << mark_y_ << "\n";
+    cout << "undo ="<<undo<<"\n";
+    if (touch == false)
+        return;
 
-    //cout << "mark x =" << mark_x_ << "\n";
-    //cout << "mark y =" << mark_y_ << "\n";
-    if (touch == true)
+    master_grid.worldToMap(mark_x_, mark_y_, mx, my);
+
+    cout << "mx =" << mx << "\n";
+    cout << "my =" << my << "\n";
     {
-        master_grid.worldToMap(mark_x_, mark_y_, mx, my);
-        start_x = mx - radius / res;
-        start_y = my - radius / res;
-        end_x = mx + radius / res;
-        end_y = my + radius / res;
-        for (int i = start_x; i < end_x; i++)
-        {
-            for (int j = start_y; j < end_y; j++)
-            {
-                master_grid.setCost(i, j, LETHAL_OBSTACLE);
-            }
-        }
+        master_grid.setCost(mx, my, LETHAL_OBSTACLE);
+        undo == true;
     }
-    else if (touch == false && (mark_x_ != 0 || mark_y_ != 0))
-    {
-        for (int i = start_x; i < end_x; i++)
-        {
-            for (int j = start_y; j < end_y; j++)
-            {
-                master_grid.setCost(i, j, FREE_SPACE);
-            }
-        }
-    }
+
+    if  (undo == true){ 
+
+                master_grid.setCost(mx, my, FREE_SPACE);
+            
+        undo == false;
+}
+return;
 }
 
 } // end namespace
