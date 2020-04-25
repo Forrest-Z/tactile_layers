@@ -12,7 +12,6 @@ using costmap_2d::FREE_SPACE;
 
 using namespace std;
 bool touch;
-bool undo;
 
 double filter_min(double data, double min)
 {
@@ -69,15 +68,14 @@ void TactileLayer::onInitialize()
         (boost::function<void(const geometry_msgs::WrenchStampedConstPtr&)>)boost::bind(
                                 &TactileLayer::once_cb, this, _1));
     touch = false;
-    undo = false;
 }
 
 void TactileLayer::ft_cb(const geometry_msgs::WrenchStampedConstPtr& ft)
 {
     fx = ft->wrench.force.x;
     fy = ft->wrench.force.y;
-    //cout << "fx:" << fx << "\n";
-    //cout << "fy:" << fy << "\n";
+    // cout << "fx:" << fx << "\n";
+    // cout << "fy:" << fy << "\n";
 }
 void TactileLayer::once_cb(const geometry_msgs::WrenchStampedConstPtr& once)
 {
@@ -98,11 +96,7 @@ void TactileLayer::updateBounds(double robot_x, double robot_y, double robot_yaw
     if (!enabled_)
         return;
     double radius = 0.1;
-    //init_fx = -0.008807;
-    //init_fy = -0.064642;
     double angle = getAngle(fx, fy, init_fx, init_fy);
-    //cout << "init fx:" << init_fx << "\n";
-    //cout << "init fy:" << init_fy << "\n";
     if (touch == false)
         return;
     if (angle > 0)
@@ -111,20 +105,15 @@ void TactileLayer::updateBounds(double robot_x, double robot_y, double robot_yaw
         mark_x_ = robot_x - 2 * radius * cos(angle);
 
     mark_y_ = robot_y + 2 * radius * sin(angle);
-    
-    cout << "touch:" << touch << "\n";// does not update bounds when no touch 
-    cout << "angle:" << angle << "\n";
 
-    //*min_x = std::min(*min_x, mark_x_ - radius);
-    //*min_y = std::min(*min_y, mark_y_ - radius);
-    //*max_x = std::max(*max_x, mark_x_ + radius);
-    //*max_y = std::max(*max_y, mark_y_ + radius);
+    //cout << "touch:" << touch << "\n";
+    //cout << "angle:" << angle << "\n";
 
-  *min_x = std::min(*min_x, mark_x_);
-  *min_y = std::min(*min_y, mark_y_);
-  *max_x = std::max(*max_x, mark_x_);
-  *max_y = std::max(*max_y, mark_y_);
 
+    *min_x = std::min(*min_x, mark_x_);
+    *min_y = std::min(*min_y, mark_y_);
+    *max_x = std::max(*max_x, mark_x_);
+    *max_y = std::max(*max_y, mark_y_);
 }
 
 void TactileLayer::updateCosts(
@@ -136,29 +125,15 @@ void TactileLayer::updateCosts(
     double radius = 0.1;
     double res = master_grid.getResolution();
     unsigned int start_x, start_y, end_x, end_y;
-    cout << "Add cost\n";
-    cout << "mark x =" << mark_x_ << "\n";
-    cout << "mark y =" << mark_y_ << "\n";
-    cout << "undo ="<<undo<<"\n";
+    //cout << "Add cost\n";
+    //cout << "mark x =" << mark_x_ << "\n";
+    //cout << "mark y =" << mark_y_ << "\n";
     if (touch == false)
         return;
 
-    master_grid.worldToMap(mark_x_, mark_y_, mx, my);
-
-    cout << "mx =" << mx << "\n";
-    cout << "my =" << my << "\n";
-    {
+    if (master_grid.worldToMap(mark_x_, mark_y_, mx, my))
         master_grid.setCost(mx, my, LETHAL_OBSTACLE);
-        undo == true;
-    }
-
-    if  (undo == true){ 
-
-                master_grid.setCost(mx, my, FREE_SPACE);
-            
-        undo == false;
-}
-return;
+    return;
 }
 
 } // end namespace
