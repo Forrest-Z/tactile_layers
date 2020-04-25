@@ -132,7 +132,10 @@ void TactileLayer::updateCosts(
         return;
 
     if (master_grid.worldToMap(mark_x_, mark_y_, mx, my))
+{
         master_grid.setCost(mx, my, LETHAL_OBSTACLE);
+       //ros::Duration(2).sleep();// adding delay results in lower map update rate
+}
     return;
 }
 
