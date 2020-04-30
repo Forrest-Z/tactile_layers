@@ -26,11 +26,15 @@ public:
    
 private:
   void reconfigureCB(costmap_2d::GenericPluginConfig &config, uint32_t level);
-  double mark_x_, mark_y_, fx,fy, init_fx, init_fy;
-  ros::Subscriber once_sub;
-  ros::Subscriber ft_sub;
-  void ft_cb(const geometry_msgs::WrenchStampedConstPtr& ft_message);
-  void once_cb(const geometry_msgs::WrenchStampedConstPtr& once_message);
+  double touch_radius_;
+  bool touch_status_;
+  double mark_x_, mark_y_, fx_, fy_, init_fx_, init_fy_;
+  double f_min_;
+//   ros::Subscriber once_sub;
+  ros::Subscriber ft_sub_;
+  bool init_ft_flag_;
+  void ftCallBack(const geometry_msgs::WrenchStampedConstPtr& ft_message);
+//   void once_cb(const geometry_msgs::WrenchStampedConstPtr& once_message);
   dynamic_reconfigure::Server<costmap_2d::GenericPluginConfig> *dsrv_;
 };
 }
