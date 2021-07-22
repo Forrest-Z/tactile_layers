@@ -37,9 +37,10 @@ tactile_layer.cpp
 - Uses the inflation area to update the cost of a circular area.
 - The attached video shows how this layer works using this code
 
-	#Note: The inflation radius can be changed from rqt_reconfigure
+Note:
 
-	#Note: In the local costmap parameter file, you must include both the tactile layer and 	inflation area to run this.
+1. The inflation radius can be changed from rqt_reconfigure 
+2. In the local costmap parameter file, you must include both the tactile layer and inflation area to run this.
 
 Add the following:
 
